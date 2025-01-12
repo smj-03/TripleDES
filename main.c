@@ -11,9 +11,11 @@ extern unsigned char EBitSelection[48];
 extern unsigned char P[32];
 extern unsigned char S[8][4][16];
 
-void createSubkeys(const _Bool*, _Bool subkeys[16][48]);
-void reverseSubkeys(_Bool subkeys[16][48]);
-void desEncryption(const _Bool*, const _Bool subkeys[16][48], _Bool*);
+void createSubkeys(const _Bool*, _Bool [16][48]);
+void reverseSubkeys(const _Bool [16][48], _Bool [16][48]);
+void desEncryption(const _Bool*, const _Bool [16][48], _Bool*);
+
+void tripleDesEncryption(const _Bool* message, const _Bool subkeys[3][16][48], _Bool* cipher);
 
 int main(void) {
     const _Bool message[64] = {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1};
@@ -36,10 +38,12 @@ int main(void) {
     vector2Hex(cipher, 64, cipherHex);
     print_HexVector(cipherHex, 16);
 
-    reverseSubkeys(subkeys);
+    // DECRYPTION
+    _Bool reversedSubkeys[16][48];
+    reverseSubkeys(subkeys, reversedSubkeys);
     _Bool decryptedMessage[64];
     unsigned char decryptedHex[16];
-    desEncryption(cipher, subkeys, decryptedMessage);
+    desEncryption(cipher, reversedSubkeys, decryptedMessage);
     vector2Hex(decryptedMessage, 64, decryptedHex);
     print_HexVector(decryptedHex, 16);
 
@@ -65,13 +69,19 @@ void createSubkeys(const _Bool* key, _Bool subkeys[16][48]) {
         performPC2(keyBeforePC2[i], PC2, subkeys[i]);
 }
 
-void reverseSubkeys(_Bool subkeys[16][48]) {
+void reverseSubkeys(const _Bool originalSubkeys[16][48], _Bool reversedSubkeys[16][48]) {
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 48; j++) {
+            reversedSubkeys[i][j] = originalSubkeys[i][j];
+        }
+    }
+
     for (int i = 0; i < 8; i++) {
         _Bool temp[48];
         for (int j = 0; j < 48; j++) {
-            temp[j] = subkeys[i][j];
-            subkeys[i][j] = subkeys[15 - i][j];
-            subkeys[15 - i][j] = temp[j];
+            temp[j] = reversedSubkeys[i][j];
+            reversedSubkeys[i][j] = reversedSubkeys[15 - i][j];
+            reversedSubkeys[15 - i][j] = temp[j];
         }
     }
 }
@@ -92,4 +102,13 @@ void desEncryption(const _Bool* message, const _Bool subkeys[16][48], _Bool* cip
 
     joinRL(preCrypto, 64, messageL[16], messageR[16]);
     performIPInverse(preCrypto, IPInv, cipher);
+}
+
+void tripleDesEncryption(const _Bool* message, const _Bool subkeys[3][16][48], _Bool* cipher) {
+    _Bool cipher1[64];
+    _Bool cipher2[64];
+
+    desEncryption(message, subkeys[0], cipher1);
+    desEncryption(cipher2, subkeys[1], cipher1);
+    desEncryption(cipher2, subkeys[2], cipher);
 }
