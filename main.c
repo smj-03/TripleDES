@@ -138,6 +138,12 @@ int main(void) {
     return 0;
 }
 
+/**
+ * Funkcja tworząca podklucze z klucza szyfrującego.
+ *
+ * @param key Klucz szyfrowania.
+ * @param subkeys Podklucze wyjściowe.
+ */
 void createSubkeys(const _Bool* key, _Bool subkeys[16][48]) {
     _Bool keyPlus[56];
     _Bool keyL[17][28];
@@ -157,6 +163,12 @@ void createSubkeys(const _Bool* key, _Bool subkeys[16][48]) {
         performPC2(keyBeforePC2[i], PC2, subkeys[i]);
 }
 
+/**
+ * Funkcja zamieniająca kolejność podkluczy.
+ *
+ * @param originalSubkeys Podklucze wejściowe.
+ * @param reversedSubkeys Podklucze wyjściowe.
+ */
 void reverseSubkeys(const _Bool originalSubkeys[16][48], _Bool reversedSubkeys[16][48]) {
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 48; j++) {
@@ -174,6 +186,15 @@ void reverseSubkeys(const _Bool originalSubkeys[16][48], _Bool reversedSubkeys[1
     }
 }
 
+/**
+ * Funkcja wykonujaca szyfrowanie DES (Data Encryption Standard).
+ * Może zostać również wykorzystana jako funkcja deszyfrująca jeśli podklucze
+ * będą w odwrotnej kolejności względem podkluczy szyfrujących.
+ *
+ * @param message Wiadomość do zaszyfrowania.
+ * @param subkeys Podklucze szyfrujące.
+ * @param cipher Wiadomość zaszyfrowana.
+ */
 void desEncryption(const _Bool* message, const _Bool subkeys[16][48], _Bool* cipher) {
     _Bool messageL[17][32];
     _Bool messageR[17][32];
@@ -192,11 +213,23 @@ void desEncryption(const _Bool* message, const _Bool subkeys[16][48], _Bool* cip
     performIPInverse(preCrypto, IPInv, cipher);
 }
 
-void tripleDesEncryption(const _Bool* message, const _Bool key1[16][48], const _Bool key2[16][48], const _Bool key3[16][48], _Bool* oCipher) {
+/**
+ * Funkcja wykonująca potrójne szyfrowanie DES.
+ * Może zostać również wykorzystana jako funkcja deszyfrująca jeśli podklucze
+ * będą w odwrotnej kolejności względem podkluczy szyfrujących.
+ * W przypadku deszyfrownia kolejność podania kluczy również musi być odwrotna.
+ *
+ * @param message Wiadomość do zaszyfrowania.
+ * @param subkeys1 Podklucze wykorzystane w pierwszym szyfrowaniu.
+ * @param subkeys2 Podklucze wykorzystane w deszyfrowaniu.
+ * @param subkeys3 Podklucze wykorzystane w ostatnim szyfrowaniu.
+ * @param oCipher Wiadomość zaszyfrowana.
+ */
+void tripleDesEncryption(const _Bool* message, const _Bool subkeys1[16][48], const _Bool subkeys2[16][48], const _Bool subkeys3[16][48], _Bool* oCipher) {
     _Bool cipher[64];
     _Bool decryptCipher[64];
 
-    desEncryption(message, key1, cipher);
-    desEncryption(cipher, key2, decryptCipher);
-    desEncryption(decryptCipher, key3, oCipher);
+    desEncryption(message, subkeys1, cipher);
+    desEncryption(cipher, subkeys2, decryptCipher);
+    desEncryption(decryptCipher, subkeys3, oCipher);
 }
