@@ -15,37 +15,125 @@ void createSubkeys(const _Bool*, _Bool [16][48]);
 void reverseSubkeys(const _Bool [16][48], _Bool [16][48]);
 void desEncryption(const _Bool*, const _Bool [16][48], _Bool*);
 
-void tripleDesEncryption(const _Bool* message, const _Bool subkeys[3][16][48], _Bool* cipher);
+void tripleDesEncryption(const _Bool*, const _Bool [16][48], const _Bool [16][48], const _Bool [16][48], _Bool*);
 
 int main(void) {
-    const _Bool message[64] = {0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1};
-    const _Bool key[64] = {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1};
+    const _Bool message[64] = {
+        0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1,
+        0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1
+    };
+    const _Bool key1[64] = {
+        0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1,
+        0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1
+    };
+    const _Bool key2[64] = {
+        1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
+        1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1
+    };
+    const _Bool key3[64] = {
+        0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0,
+        1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0
+    };
 
-    _Bool subkeys[16][48];
-    _Bool cipher[64];
+    _Bool subkeys1[16][48];
+    _Bool subkeys2[16][48];
+    _Bool subkeys3[16][48];
+    createSubkeys(key1, subkeys1);
+    createSubkeys(key2, subkeys2);
+    createSubkeys(key3, subkeys3);
 
-    // STEP 1 - CREATE 16 SUB KEYS
-    createSubkeys(key, subkeys);
+    _Bool reversedSubkeys1[16][48];
+    _Bool reversedSubkeys2[16][48];
+    _Bool reversedSubkeys3[16][48];
+    reverseSubkeys(subkeys1, reversedSubkeys1);
+    reverseSubkeys(subkeys2, reversedSubkeys2);
+    reverseSubkeys(subkeys3, reversedSubkeys3);
 
-    // STEP 2 - ENCODE BLOCKS OF DATA
-    desEncryption(message, subkeys, cipher);
+    // SINGLE DES ENCRYPTION & DECRYPTION
+    printf("SINGLE DES OPERATION:\n");
+    _Bool desCipher[64];
+    desEncryption(message, subkeys1, desCipher);
 
     unsigned char messageHex[16];
     vector2Hex(message, 64, messageHex);
+    printf("HEX MESSAGE: ");
     print_HexVector(messageHex, 16);
 
-    unsigned char cipherHex[16];
-    vector2Hex(cipher, 64, cipherHex);
-    print_HexVector(cipherHex, 16);
+    unsigned char desCipherHex[16];
+    vector2Hex(desCipher, 64, desCipherHex);
+    printf("HEX CIPHER: ");
+    print_HexVector(desCipherHex, 16);
 
-    // DECRYPTION
-    _Bool reversedSubkeys[16][48];
-    reverseSubkeys(subkeys, reversedSubkeys);
-    _Bool decryptedMessage[64];
-    unsigned char decryptedHex[16];
-    desEncryption(cipher, reversedSubkeys, decryptedMessage);
-    vector2Hex(decryptedMessage, 64, decryptedHex);
-    print_HexVector(decryptedHex, 16);
+    _Bool desDecrypt[64];
+    desEncryption(desCipher, reversedSubkeys1, desDecrypt);
+
+    unsigned char desDecryptHex[16];
+    vector2Hex(desDecrypt, 64, desDecryptHex);
+    printf("HEX DECRYPTED CIPHER: ");
+    print_HexVector(desDecryptHex, 16);
+
+    // TRIPLE DES ENCRYPTION & DECRYPTION - ONE KEY
+    printf("\nTRIPLE DES OPERATION (1 KEY):\n");
+    _Bool des3Cipher1[64];
+    tripleDesEncryption(message, subkeys1, reversedSubkeys1, subkeys1, des3Cipher1);
+
+    printf("HEX MESSAGE: ");
+    print_HexVector(messageHex, 16);
+
+    unsigned char des3CipherHex1[16];
+    vector2Hex(des3Cipher1, 64, des3CipherHex1);
+    printf("HEX CIPHER: ");
+    print_HexVector(des3CipherHex1, 16);
+
+    _Bool des3Decrypt1[64];
+    tripleDesEncryption(des3Cipher1, reversedSubkeys1, subkeys1, reversedSubkeys1, des3Decrypt1);
+
+    unsigned char des3DecryptHex1[16];
+    vector2Hex(des3Decrypt1, 64, des3DecryptHex1);
+    printf("HEX DECRYPTED CIPHER: ");
+    print_HexVector(des3DecryptHex1, 16);
+
+    // TRIPLE DES ENCRYPTION & DECRYPTION - TWO KEYS
+    printf("\nTRIPLE DES OPERATION (2 KEYS):\n");
+    _Bool des3Cipher2[64];
+    tripleDesEncryption(message, subkeys1, reversedSubkeys2, subkeys1, des3Cipher2);
+
+    printf("HEX MESSAGE: ");
+    print_HexVector(messageHex, 16);
+
+    unsigned char des3CipherHex2[16];
+    vector2Hex(des3Cipher2, 64, des3CipherHex2);
+    printf("HEX CIPHER: ");
+    print_HexVector(des3CipherHex2, 16);
+
+    _Bool des3Decrypt2[64];
+    tripleDesEncryption(des3Cipher2, reversedSubkeys1, subkeys2, reversedSubkeys1, des3Decrypt2);
+
+    unsigned char des3DecryptHex2[16];
+    vector2Hex(des3Decrypt2, 64, des3DecryptHex2);
+    printf("HEX DECRYPTED CIPHER: ");
+    print_HexVector(des3DecryptHex2, 16);
+
+    // TRIPLE DES ENCRYPTION & DECRYPTION - THREE KEYS
+    printf("\nTRIPLE DES OPERATION (3 KEYS):\n");
+    _Bool des3Cipher3[64];
+    tripleDesEncryption(message, subkeys1, reversedSubkeys2, subkeys3, des3Cipher3);
+
+    printf("HEX MESSAGE: ");
+    print_HexVector(messageHex, 16);
+
+    unsigned char des3CipherHex3[16];
+    vector2Hex(des3Cipher3, 64, des3CipherHex3);
+    printf("HEX CIPHER: ");
+    print_HexVector(des3CipherHex3, 16);
+
+    _Bool des3Decrypt3[64];
+    tripleDesEncryption(des3Cipher3, reversedSubkeys3, subkeys2, reversedSubkeys1, des3Decrypt3);
+
+    unsigned char des3DecryptHex3[16];
+    vector2Hex(des3Decrypt3, 64, des3DecryptHex3);
+    printf("HEX DECRYPTED CIPHER: ");
+    print_HexVector(des3DecryptHex3, 16);
 
     return 0;
 }
@@ -104,11 +192,11 @@ void desEncryption(const _Bool* message, const _Bool subkeys[16][48], _Bool* cip
     performIPInverse(preCrypto, IPInv, cipher);
 }
 
-void tripleDesEncryption(const _Bool* message, const _Bool subkeys[3][16][48], _Bool* cipher) {
-    _Bool cipher1[64];
-    _Bool cipher2[64];
+void tripleDesEncryption(const _Bool* message, const _Bool key1[16][48], const _Bool key2[16][48], const _Bool key3[16][48], _Bool* oCipher) {
+    _Bool cipher[64];
+    _Bool decryptCipher[64];
 
-    desEncryption(message, subkeys[0], cipher1);
-    desEncryption(cipher2, subkeys[1], cipher1);
-    desEncryption(cipher2, subkeys[2], cipher);
+    desEncryption(message, key1, cipher);
+    desEncryption(cipher, key2, decryptCipher);
+    desEncryption(decryptCipher, key3, oCipher);
 }
